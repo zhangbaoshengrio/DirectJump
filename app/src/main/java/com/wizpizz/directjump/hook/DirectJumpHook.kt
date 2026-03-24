@@ -40,22 +40,41 @@ object DirectJumpHook {
     private fun redirectIfMatched(intent: Intent, activity: Activity, rules: List<RedirectRule>): Intent? {
         if (intent.action != Intent.ACTION_VIEW) return null
         val uri = intent.data ?: return null
-        val host = runCatching { Uri.parse(uri.toString()).host }.getOrNull() ?: return null
+        val scheme = uri.scheme ?: return null
+        if (scheme != "http" && scheme != "https") return null
 
-        val rule = rules.firstOrNull { rule ->
-            rule.hosts.any { h -> host == h || host.endsWith(".$h") }
-        } ?: return null
+        val host = runCatching { uri.host }.getOrNull() ?: return null
 
+        val rule = rules.firstOrNull { rule -> matchesRule(host, rule) } ?: return null
+
+        // targetPkg == null → default browser (strip forced package)
+        if (rule.targetPkg == null) {
+            // Only redirect if YouTube (or another app) has locked the intent to a specific browser
+            if (intent.`package` == null) return null
+            Log.d(TAG, "[${rule.name}] Stripping forced package '${intent.`package`}', opening $uri in default browser")
+            return Intent(Intent.ACTION_VIEW, uri).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+
+        // targetPkg set → redirect to that specific app
         val installed = activity.packageManager.getLaunchIntentForPackage(rule.targetPkg) != null
         if (!installed) {
             Log.w(TAG, "[${rule.name}] App ${rule.targetPkg} not installed, skipping redirect")
             return null
         }
-
         Log.d(TAG, "[${rule.name}] Redirecting $uri → ${rule.targetPkg}")
         return Intent(Intent.ACTION_VIEW, uri).apply {
             setPackage(rule.targetPkg)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+    }
+
+    private fun matchesRule(host: String, rule: RedirectRule): Boolean {
+        // Check exclusions first
+        if (rule.excludeHosts.any { ex -> host == ex || host.endsWith(".$ex") }) return false
+        // Wildcard matches all hosts
+        if (rule.hosts.contains("*")) return true
+        return rule.hosts.any { h -> host == h || host.endsWith(".$h") }
     }
 }
