@@ -1,0 +1,38 @@
+com.wizpizz.directjump.app-appcompat-resources-1.7.0-0 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/15ee4f264f86166f6e5b7246a9a58e4d/transformed/appcompat-resources-1.7.0/res
+com.wizpizz.directjump.app-savedstate-1.2.1-1 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/186132f325d10d4f7e4588901b45fd5b/transformed/savedstate-1.2.1/res
+com.wizpizz.directjump.app-core-1.13.1-2 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/1884e709cb48b03582378e434418c1eb/transformed/core-1.13.1/res
+com.wizpizz.directjump.app-savedstate-ktx-1.2.1-3 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/1e9296e60e93afd26e17bcbc235669bc/transformed/savedstate-ktx-1.2.1/res
+com.wizpizz.directjump.app-startup-runtime-1.1.1-4 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/29f3d4212e303f1068bb857b5196f241/transformed/startup-runtime-1.1.1/res
+com.wizpizz.directjump.app-lifecycle-viewmodel-ktx-2.6.2-5 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/2d8fb298eb22fbb038fcbea797ea4515/transformed/lifecycle-viewmodel-ktx-2.6.2/res
+com.wizpizz.directjump.app-transition-1.4.1-6 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/2f19f48668fa8ccb5b15d9ae435f15f8/transformed/transition-1.4.1/res
+com.wizpizz.directjump.app-lifecycle-viewmodel-savedstate-2.6.2-7 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/3945993dd4ac1b4117100065f3c4d1a7/transformed/lifecycle-viewmodel-savedstate-2.6.2/res
+com.wizpizz.directjump.app-lifecycle-livedata-2.6.2-8 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/42ff033745c4ad278af4f4371220bc0a/transformed/lifecycle-livedata-2.6.2/res
+com.wizpizz.directjump.app-window-1.0.0-9 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/4dfedd8b63f57cce8e46ba93e49be49f/transformed/window-1.0.0/res
+com.wizpizz.directjump.app-activity-ktx-1.7.0-10 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/5e975ef1404b495d832b4494d0813a7f/transformed/activity-ktx-1.7.0/res
+com.wizpizz.directjump.app-lifecycle-viewmodel-2.6.2-11 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/726e5fbd3b3113d51dc5733dfc3a8e3b/transformed/lifecycle-viewmodel-2.6.2/res
+com.wizpizz.directjump.app-appcompat-1.7.0-12 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/7f1e647ab19cf86a1cf71e15e24e3f2a/transformed/appcompat-1.7.0/res
+com.wizpizz.directjump.app-preference-1.2.1-13 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/7fe1530f772a266cf48aff641a501ecf/transformed/preference-1.2.1/res
+com.wizpizz.directjump.app-emoji2-views-helper-1.3.0-14 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/868e6bee6a42e685ac6a91b7c00a7640/transformed/emoji2-views-helper-1.3.0/res
+com.wizpizz.directjump.app-lifecycle-livedata-core-ktx-2.6.2-15 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/87209d15d4a642900cb65d47bc4dc8c7/transformed/lifecycle-livedata-core-ktx-2.6.2/res
+com.wizpizz.directjump.app-recyclerview-1.0.0-16 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/9093d38de418f196f5e0cb45dfb119b7/transformed/recyclerview-1.0.0/res
+com.wizpizz.directjump.app-lifecycle-runtime-2.6.2-17 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/9b793751cf48574a7904781a19bd6933/transformed/lifecycle-runtime-2.6.2/res
+com.wizpizz.directjump.app-preference-ktx-1.2.1-18 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/a7a59b22bd7c32ea2c287eab4a8c6384/transformed/preference-ktx-1.2.1/res
+com.wizpizz.directjump.app-activity-1.7.0-19 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/b506a3f937799944bcfd2d7e14e3a9a4/transformed/activity-1.7.0/res
+com.wizpizz.directjump.app-slidingpanelayout-1.2.0-20 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/b75c8ea29641dc1434377f8cba7ada0b/transformed/slidingpanelayout-1.2.0/res
+com.wizpizz.directjump.app-fragment-1.5.4-21 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/c2f26a6e057ac01d0df349d1d55ca170/transformed/fragment-1.5.4/res
+com.wizpizz.directjump.app-annotation-experimental-1.4.0-22 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/c87a930d233a589f3048a3ef1d92a44d/transformed/annotation-experimental-1.4.0/res
+com.wizpizz.directjump.app-core-runtime-2.2.0-23 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/cc96bc035ebd4a9827cc9db5d98c6b49/transformed/core-runtime-2.2.0/res
+com.wizpizz.directjump.app-emoji2-1.3.0-24 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/ce26d219ed0f406b45bcfa93669115d0/transformed/emoji2-1.3.0/res
+com.wizpizz.directjump.app-profileinstaller-1.3.1-25 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/ceecc738745be5972ee6616b00c4a583/transformed/profileinstaller-1.3.1/res
+com.wizpizz.directjump.app-core-ktx-1.13.1-26 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/d2c1ffcfe7c95a9bb2d75ba9e6cccbc9/transformed/core-ktx-1.13.1/res
+com.wizpizz.directjump.app-lifecycle-runtime-ktx-2.6.2-27 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/d5673f1a579527f7a67ebc61acaf714f/transformed/lifecycle-runtime-ktx-2.6.2/res
+com.wizpizz.directjump.app-lifecycle-livedata-core-2.6.2-28 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/dd952f4d11a5263f9fd51e3a3553345a/transformed/lifecycle-livedata-core-2.6.2/res
+com.wizpizz.directjump.app-lifecycle-process-2.6.2-29 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/e6e0b700d5970eed98277925994fa506/transformed/lifecycle-process-2.6.2/res
+com.wizpizz.directjump.app-coordinatorlayout-1.0.0-30 /Users/zhangbaosheng/.gradle/caches/8.13/transforms/f998f52bbc6384b760228b9f5a8b83ff/transformed/coordinatorlayout-1.0.0/res
+com.wizpizz.directjump.app-pngs-31 /Users/zhangbaosheng/Python_files/♥️claude code项目总文件夹/DirectJump/app/build/generated/res/pngs/debug
+com.wizpizz.directjump.app-resValues-32 /Users/zhangbaosheng/Python_files/♥️claude code项目总文件夹/DirectJump/app/build/generated/res/resValues/debug
+com.wizpizz.directjump.app-packageDebugResources-33 /Users/zhangbaosheng/Python_files/♥️claude code项目总文件夹/DirectJump/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.wizpizz.directjump.app-packageDebugResources-34 /Users/zhangbaosheng/Python_files/♥️claude code项目总文件夹/DirectJump/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.wizpizz.directjump.app-debug-35 /Users/zhangbaosheng/Python_files/♥️claude code项目总文件夹/DirectJump/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.wizpizz.directjump.app-debug-36 /Users/zhangbaosheng/Python_files/♥️claude code项目总文件夹/DirectJump/app/src/debug/res
+com.wizpizz.directjump.app-main-37 /Users/zhangbaosheng/Python_files/♥️claude code项目总文件夹/DirectJump/app/src/main/res
