@@ -7,7 +7,7 @@ package com.highcapable.yukihookapi
  *
  * Compiled from YukiHookXposedProcessor
  *
- * Generate Date: Mar 24, 2026, 8:58:03 PM
+ * Generate Date: Mar 24, 2026, 9:14:57 PM
  *
  * Powered by YukiHookAPI (C) HighCapable 2019-2024
  *
@@ -15,5 +15,5 @@ package com.highcapable.yukihookapi
  */
 object YukiHookAPI_Impl {
 
-    val compiledTimestamp get() = 1774357083027
+    val compiledTimestamp get() = 1774358097643
 }
