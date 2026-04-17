@@ -18,5 +18,7 @@ data class RedirectRule(
     val excludeHosts: Set<String> = emptySet(),
     val targetPkg: String?,
     val name: String,
-    val urlTransformer: ((String) -> String?)? = null
+    val urlTransformer: ((String) -> String?)? = null,
+    /** Follow HTTP redirects before opening (needed for short-link hosts like 3.cn). */
+    val resolveRedirect: Boolean = false
 )

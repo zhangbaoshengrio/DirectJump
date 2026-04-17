@@ -11,6 +11,10 @@ import com.highcapable.yukihookapi.hook.factory.method
 import com.highcapable.yukihookapi.hook.param.PackageParam
 import com.highcapable.yukihookapi.hook.type.android.IntentClass
 import com.wizpizz.directjump.config.RedirectRule
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 object DirectJumpHook {
 
@@ -26,17 +30,20 @@ object DirectJumpHook {
             hookStartActivity(ContextWrapper::class.java,       withBundle = true,  rules)
 
             // WebView hooks (covers in-app browsers)
-            WebView::class.java.method {
-                name = "loadUrl"
-                paramCount = 1
-            }.hook {
-                before {
-                    val url = args[0] as? String ?: return@before
-                    buildRedirectIntent(url, rules) ?: return@before
-                    instance<android.content.Context>().startActivity(
-                        buildRedirectIntent(url, rules)!!
-                    )
-                    resultNull()
+            // Hook both loadUrl(String) and loadUrl(String, Map) variants
+            for (paramCount in listOf(1, 2)) {
+                WebView::class.java.method {
+                    name = "loadUrl"
+                    this.paramCount = paramCount
+                }.hook {
+                    before {
+                        val url = args[0] as? String ?: return@before
+                        buildRedirectIntent(url, rules) ?: return@before
+                        instance<android.content.Context>().startActivity(
+                            buildRedirectIntent(url, rules)!!
+                        )
+                        resultNull()
+                    }
                 }
             }
 
@@ -84,9 +91,17 @@ object DirectJumpHook {
         val rule = rules.firstOrNull { matchesRule(host, path, it) } ?: return null
 
         // Apply URL transformer (e.g. extract youtube.com/redirect?q=REAL_URL)
-        val finalUrl = if (rule.urlTransformer != null) {
+        val transformedUrl = if (rule.urlTransformer != null) {
             rule.urlTransformer.invoke(url) ?: return null
         } else url
+
+        // For short-link hosts that need resolving (e.g. 3.cn, u.jd.com),
+        // follow the redirect to get the real destination URL.
+        val finalUrl = if (rule.resolveRedirect && isShortLink(transformedUrl)) {
+            resolveRedirect(transformedUrl).also {
+                if (it != transformedUrl) Log.d(TAG, "[${rule.name}] resolved $transformedUrl → $it")
+            }
+        } else transformedUrl
 
         val finalUri = runCatching { Uri.parse(finalUrl) }.getOrNull() ?: return null
 
@@ -96,6 +111,36 @@ object DirectJumpHook {
             rule.targetPkg?.let { setPackage(it) }
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+    }
+
+    private fun isShortLink(url: String): Boolean {
+        val host = runCatching { Uri.parse(url).host }.getOrNull() ?: return false
+        return host == "3.cn" || host == "u.jd.com"
+    }
+
+    /** Follow HTTP redirects (one hop) on a background thread, timeout 3 s. */
+    private fun resolveRedirect(url: String): String {
+        val latch = CountDownLatch(1)
+        var resolved = url
+        Thread {
+            try {
+                val conn = URL(url).openConnection() as HttpURLConnection
+                conn.instanceFollowRedirects = false
+                conn.requestMethod = "HEAD"
+                conn.connectTimeout = 3000
+                conn.readTimeout = 3000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+                conn.connect()
+                conn.getHeaderField("Location")?.let { resolved = it }
+                conn.disconnect()
+            } catch (e: Exception) {
+                Log.w(TAG, "resolveRedirect failed: ${e.message}")
+            } finally {
+                latch.countDown()
+            }
+        }.start()
+        latch.await(3, TimeUnit.SECONDS)
+        return resolved
     }
 
     private fun matchesRule(host: String, path: String, rule: RedirectRule): Boolean {

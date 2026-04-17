@@ -10,7 +10,8 @@ object RedirectConfig {
     val RULE_JD = RedirectRule(
         hosts = setOf("item.jd.com", "pro.m.jd.com", "u.jd.com", "union.jd.com", "3.cn", "jd.com"),
         targetPkg = "com.jingdong.app.mall",
-        name = "JD"
+        name = "JD",
+        resolveRedirect = true
     )
 
     /**
