@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit
 object DirectJumpHook {
 
     private const val TAG = "DirectJump"
+    private val redirectCache = mutableMapOf<String, String>()
 
     fun apply(packageParam: PackageParam, rules: List<RedirectRule>) {
         packageParam.apply {
@@ -95,22 +96,43 @@ object DirectJumpHook {
             rule.urlTransformer.invoke(url) ?: return null
         } else url
 
-        // For short-link hosts that need resolving (e.g. 3.cn, u.jd.com),
-        // follow the redirect to get the real destination URL.
+        // For short-link hosts, resolve to real product URL so JD app can open it directly.
         val finalUrl = if (rule.resolveRedirect && isShortLink(transformedUrl)) {
-            resolveRedirect(transformedUrl).also {
-                if (it != transformedUrl) Log.d(TAG, "[${rule.name}] resolved $transformedUrl → $it")
-            }
+            redirectCache.getOrPut(transformedUrl) { resolveRedirect(transformedUrl) }
+                .also { Log.d(TAG, "[${rule.name}] resolved $transformedUrl → $it") }
         } else transformedUrl
 
-        val finalUri = runCatching { Uri.parse(finalUrl) }.getOrNull() ?: return null
+        // Convert item.jd.com product URLs to JD's native deep link scheme,
+        // which is the only reliable way to open a specific product in JD app.
+        val jdDeepLink = toJdDeepLink(finalUrl)
+        if (jdDeepLink != null) {
+            Log.d(TAG, "[${rule.name}] deep link $finalUrl → $jdDeepLink")
+            return Intent(Intent.ACTION_VIEW, Uri.parse(jdDeepLink)).apply {
+                setPackage("com.jingdong.app.mall")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
 
-        Log.d(TAG, "[${rule.name}] $url → ${rule.targetPkg ?: "default browser"} (final: $finalUrl)")
+        val finalUri = runCatching { Uri.parse(finalUrl) }.getOrNull() ?: return null
+        val targetPkg = if (isShortLink(finalUrl)) null else rule.targetPkg
+
+        Log.d(TAG, "[${rule.name}] $url → ${targetPkg ?: "app-links"} (final: $finalUrl)")
 
         return Intent(Intent.ACTION_VIEW, finalUri).apply {
-            rule.targetPkg?.let { setPackage(it) }
+            targetPkg?.let { setPackage(it) }
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+    }
+
+    private val JD_SKU_RE = Regex("""/(?:product/)?(\d+)\.html""")
+
+    /** Convert an item.jd.com or pro.m.jd.com URL to JD's native deep link scheme. */
+    private fun toJdDeepLink(url: String): String? {
+        val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return null
+        val host = uri.host ?: return null
+        if (host != "item.jd.com" && host != "pro.m.jd.com") return null
+        val skuId = JD_SKU_RE.find(uri.path ?: return null)?.groupValues?.get(1) ?: return null
+        return """openapp.jdmobile://virtual?params={"category":"jump","des":"productDetail","skuId":"$skuId"}"""
     }
 
     private fun isShortLink(url: String): Boolean {
@@ -118,28 +140,71 @@ object DirectJumpHook {
         return host == "3.cn" || host == "u.jd.com"
     }
 
-    /** Follow HTTP redirects (one hop) on a background thread, timeout 3 s. */
+    private val HRL_RE = Regex("""var hrl='([^']+)'""")
+    private val UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/124.0 Mobile Safari/537.36"
+
+    /**
+     * Resolve a JD short URL (u.jd.com / 3.cn) to the real item.jd.com product URL.
+     *
+     * Two-step process:
+     *  1. GET the short-link page (returns 200 HTML) → extract the `hrl` JS variable
+     *     which points to u.jd.com/jda?p=<encoded>
+     *  2. HEAD the `hrl` URL → returns 302 Location: https://item.jd.com/XXXXX.html
+     */
     private fun resolveRedirect(url: String): String {
         val latch = CountDownLatch(1)
         var resolved = url
         Thread {
             try {
-                val conn = URL(url).openConnection() as HttpURLConnection
-                conn.instanceFollowRedirects = false
-                conn.requestMethod = "HEAD"
-                conn.connectTimeout = 3000
-                conn.readTimeout = 3000
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0")
-                conn.connect()
-                conn.getHeaderField("Location")?.let { resolved = it }
-                conn.disconnect()
+                // Step 1: fetch short-link page and extract hrl
+                val step1 = URL(url).openConnection() as HttpURLConnection
+                step1.instanceFollowRedirects = false
+                step1.requestMethod = "GET"
+                step1.connectTimeout = 5000
+                step1.readTimeout = 5000
+                step1.setRequestProperty("User-Agent", UA)
+                step1.connect()
+                val code1 = step1.responseCode
+                val loc1 = step1.getHeaderField("Location")
+                Log.d(TAG, "resolveRedirect step1 $url → code=$code1 location=$loc1")
+
+                val hrl: String? = if (loc1 != null) {
+                    loc1  // plain HTTP redirect (3.cn might do this)
+                } else if (code1 == 200) {
+                    val html = step1.inputStream.bufferedReader(Charsets.UTF_8).readText()
+                    HRL_RE.find(html)?.groupValues?.get(1)?.also {
+                        Log.d(TAG, "resolveRedirect step1 extracted hrl: $it")
+                    }
+                } else null
+                step1.disconnect()
+
+                if (hrl == null) {
+                    Log.w(TAG, "resolveRedirect: could not extract hrl from $url")
+                    return@Thread
+                }
+
+                // Step 2: follow hrl → should 302 to item.jd.com
+                val step2 = URL(hrl).openConnection() as HttpURLConnection
+                step2.instanceFollowRedirects = false
+                step2.requestMethod = "GET"
+                step2.connectTimeout = 5000
+                step2.readTimeout = 5000
+                step2.setRequestProperty("User-Agent", UA)
+                step2.connect()
+                val code2 = step2.responseCode
+                val loc2 = step2.getHeaderField("Location")
+                Log.d(TAG, "resolveRedirect step2 $hrl → code=$code2 location=$loc2")
+                step2.disconnect()
+
+                if (loc2 != null) resolved = loc2
+
             } catch (e: Exception) {
                 Log.w(TAG, "resolveRedirect failed: ${e.message}")
             } finally {
                 latch.countDown()
             }
         }.start()
-        latch.await(3, TimeUnit.SECONDS)
+        latch.await(8, TimeUnit.SECONDS)
         return resolved
     }
 
