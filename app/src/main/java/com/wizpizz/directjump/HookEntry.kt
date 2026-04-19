@@ -6,6 +6,7 @@ import com.highcapable.yukihookapi.hook.factory.encase
 import com.highcapable.yukihookapi.hook.xposed.proxy.IYukiHookXposedInit
 import com.wizpizz.directjump.config.RedirectConfig
 import com.wizpizz.directjump.hook.DirectJumpHook
+import com.wizpizz.directjump.hook.KeepAliveHook
 
 @InjectYukiHookWithXposed
 object HookEntry : IYukiHookXposedInit {
@@ -18,6 +19,9 @@ object HookEntry : IYukiHookXposedInit {
             loadApp(name = appConfig.packageName) {
                 DirectJumpHook.apply(this, appConfig.rules)
             }
+        }
+        loadApp(name = "com.tencent.mm") {
+            KeepAliveHook.apply(this)
         }
     }
 }

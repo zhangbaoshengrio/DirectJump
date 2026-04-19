@@ -102,6 +102,15 @@ object DirectJumpHook {
                 .also { Log.d(TAG, "[${rule.name}] resolved $transformedUrl → $it") }
         } else transformedUrl
 
+        // If resolution yielded an openapp.jdmobile:// deep link, use it directly
+        if (finalUrl.startsWith("openapp.jdmobile://")) {
+            Log.d(TAG, "[${rule.name}] using extracted deep link: $finalUrl")
+            return Intent(Intent.ACTION_VIEW, Uri.parse(finalUrl)).apply {
+                setPackage("com.jingdong.app.mall")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+
         // Convert item.jd.com product URLs to JD's native deep link scheme,
         // which is the only reliable way to open a specific product in JD app.
         val jdDeepLink = toJdDeepLink(finalUrl)
@@ -126,18 +135,27 @@ object DirectJumpHook {
 
     private val JD_SKU_RE = Regex("""/(?:product/)?(\d+)\.html""")
 
-    /** Convert an item.jd.com or pro.m.jd.com URL to JD's native deep link scheme. */
+    /** Convert a JD product/jingfen URL to JD's native deep link scheme. */
     private fun toJdDeepLink(url: String): String? {
         val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return null
         val host = uri.host ?: return null
-        if (host != "item.jd.com" && host != "pro.m.jd.com") return null
-        val skuId = JD_SKU_RE.find(uri.path ?: return null)?.groupValues?.get(1) ?: return null
-        return """openapp.jdmobile://virtual?params={"category":"jump","des":"productDetail","skuId":"$skuId"}"""
+        return when {
+            host == "item.jd.com" || host == "pro.m.jd.com" -> {
+                val skuId = JD_SKU_RE.find(uri.path ?: return null)?.groupValues?.get(1) ?: return null
+                """openapp.jdmobile://virtual?params={"category":"jump","des":"productDetail","skuId":"$skuId"}"""
+            }
+            host == "jingfen.jd.com" -> {
+                // Open jingfen affiliate page in JD app's built-in browser
+                val urlForJson = url.replace("\\", "\\\\").replace("\"", "\\\"")
+                """openapp.jdmobile://virtual?params={"category":"jump","des":"h5","url":"$urlForJson"}"""
+            }
+            else -> null
+        }
     }
 
     private fun isShortLink(url: String): Boolean {
         val host = runCatching { Uri.parse(url).host }.getOrNull() ?: return false
-        return host == "3.cn" || host == "u.jd.com"
+        return host == "3.cn" || host == "u.jd.com" || host == "jingfen.jd.com"
     }
 
     private val HRL_RE = Regex("""var hrl='([^']+)'""")
@@ -198,13 +216,46 @@ object DirectJumpHook {
 
                 if (loc2 != null) resolved = loc2
 
+                // Step 3: if resolved to jingfen.jd.com, extract openapp:// deep link from HTML
+                val resolvedHost = runCatching { Uri.parse(resolved).host }.getOrNull()
+                if (resolvedHost == "jingfen.jd.com") {
+                    val step3 = URL(resolved).openConnection() as HttpURLConnection
+                    step3.instanceFollowRedirects = false
+                    step3.requestMethod = "GET"
+                    step3.connectTimeout = 5000
+                    step3.readTimeout = 5000
+                    step3.setRequestProperty("User-Agent", UA)
+                    step3.connect()
+                    val code3 = step3.responseCode
+                    val loc3 = step3.getHeaderField("Location")
+                    Log.d(TAG, "resolveRedirect step3 $resolved → code=$code3 location=$loc3")
+                    if (loc3 != null) {
+                        resolved = loc3
+                    } else if (code3 == 200) {
+                        val html3 = step3.inputStream.bufferedReader(Charsets.UTF_8).readText()
+                        // First try item.jd.com URL
+                        val itemUrl = Regex("""https://(?:item|pro\.m)\.jd\.com/[^\s"'<]+""").find(html3)?.value
+                        if (itemUrl != null) {
+                            resolved = itemUrl
+                            Log.d(TAG, "resolveRedirect step3 found item URL: $itemUrl")
+                        } else {
+                            // Fall back to openapp.jdmobile:// deep link embedded in the page
+                            Regex("""openapp\.jdmobile://[^\s"'\\<]+""").find(html3)?.value?.also {
+                                resolved = it
+                                Log.d(TAG, "resolveRedirect step3 found openapp URL: $it")
+                            }
+                        }
+                    }
+                    step3.disconnect()
+                }
+
             } catch (e: Exception) {
                 Log.w(TAG, "resolveRedirect failed: ${e.message}")
             } finally {
                 latch.countDown()
             }
         }.start()
-        latch.await(8, TimeUnit.SECONDS)
+        latch.await(12, TimeUnit.SECONDS)
         return resolved
     }
 
